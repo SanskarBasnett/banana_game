@@ -7,11 +7,13 @@ const requireAuth = require("../middleware/authMiddleware");
 const {
     startPuzzle,
     submitAnswer,
-    getScores
+    getScores,
+    getLeaderboard
 } = require("../controllers/gameController");
 
 router.get("/puzzle", requireAuth, startPuzzle);
 router.post("/answer", requireAuth, submitAnswer);
 router.get("/scores", requireAuth, getScores);
+router.get("/leaderboard", requireAuth, getLeaderboard);
 
 module.exports = router;

@@ -195,3 +195,47 @@ body {
     background-color: #f8d7da;
     color: #721c24;
 }
+
+
+/* Global Leaderboard */
+.leaderboard-card {
+    background-color: white;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.leaderboard-card h2 {
+    margin-bottom: 8px;
+}
+
+.leaderboard-card > p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+}
+
+.leaderboard-table th {
+    background-color: #f5f5f5;
+}
+
+.leaderboard-table tr:first-child td {
+    font-weight: bold;
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
+}

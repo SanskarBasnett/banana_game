@@ -117,8 +117,37 @@ function getScores(req, res) {
     });
 }
 
+
+// Get the global top 10 leaderboard
+function getLeaderboard(req, res) {
+    try {
+        const leaderboard = db.prepare(`
+            SELECT
+                users.username,
+                COALESCE(SUM(scores.score), 0) AS totalScore
+            FROM users
+            LEFT JOIN scores ON users.id = scores.user_id
+            GROUP BY users.id, users.username
+            ORDER BY totalScore DESC, users.username ASC
+            LIMIT 10
+        `).all();
+
+        res.json({
+            leaderboard
+        });
+
+    } catch (error) {
+        console.error("Leaderboard error:", error);
+
+        res.status(500).json({
+            message: "Unable to load leaderboard."
+        });
+    }
+}
+
 module.exports = {
     startPuzzle,
     submitAnswer,
-    getScores
+    getScores,
+    getLeaderboard
 };

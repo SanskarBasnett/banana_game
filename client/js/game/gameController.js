@@ -2,7 +2,8 @@
 import {
     getPuzzle,
     submitAnswer,
-    getScores
+    getScores,
+    getLeaderboard
 } from "../api/apiClient.js";
 
 const startButton = document.getElementById("startButton");
@@ -14,6 +15,7 @@ const answerInput = document.getElementById("answer");
 const resultMessage = document.getElementById("resultMessage");
 const scoreDisplay = document.getElementById("score");
 const timerDisplay = document.getElementById("timer");
+const leaderboardDisplay = document.getElementById("leaderboard");
 
 let puzzleActive = false;
 let countdownInterval = null;
@@ -25,6 +27,57 @@ async function updateScore() {
         scoreDisplay.textContent = data.score;
     } catch (error) {
         console.error("Score loading error:", error);
+    }
+}
+
+// Load and display the global leaderboard
+async function updateLeaderboard() {
+    try {
+        const data = await getLeaderboard();
+        leaderboardDisplay.textContent = "";
+
+        if (data.leaderboard.length === 0) {
+            leaderboardDisplay.textContent = "No players yet.";
+            return;
+        }
+
+        const table = document.createElement("table");
+        table.classList.add("leaderboard-table");
+
+        const header = document.createElement("tr");
+
+        ["Rank", "Player", "Score"].forEach(title => {
+            const th = document.createElement("th");
+            th.textContent = title;
+            header.appendChild(th);
+        });
+
+        table.appendChild(header);
+
+        data.leaderboard.forEach((player, index) => {
+            const row = document.createElement("tr");
+
+            const rankCell = document.createElement("td");
+            rankCell.textContent = index + 1;
+
+            const nameCell = document.createElement("td");
+            nameCell.textContent = player.username;
+
+            const scoreCell = document.createElement("td");
+            scoreCell.textContent = player.totalScore;
+
+            row.appendChild(rankCell);
+            row.appendChild(nameCell);
+            row.appendChild(scoreCell);
+
+            table.appendChild(row);
+        });
+
+        leaderboardDisplay.appendChild(table);
+
+    } catch (error) {
+        leaderboardDisplay.textContent = "Unable to load leaderboard.";
+        console.error("Leaderboard loading error:", error);
     }
 }
 
@@ -102,6 +155,9 @@ async function checkAnswer(event) {
         resultMessage.textContent = data.message;
         scoreDisplay.textContent = data.score;
 
+        // Refresh leaderboard after submitting an answer
+        await updateLeaderboard();
+
         puzzleArea.hidden = true;
         gameMessage.textContent = "Ready for another puzzle?";
 
@@ -118,3 +174,4 @@ startButton.addEventListener("click", startGame);
 answerForm.addEventListener("submit", checkAnswer);
 
 updateScore();
+updateLeaderboard();

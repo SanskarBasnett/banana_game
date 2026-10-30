@@ -31,3 +31,7 @@ export function submitAnswer(answer) {
 export function getScores() {
     return apiRequest("/api/game/scores");
 }
+
+export function getLeaderboard() {
+    return apiRequest("/api/game/leaderboard");
+}
