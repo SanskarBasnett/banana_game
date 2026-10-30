@@ -10,6 +10,7 @@ const db = require("./config/database");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const authRoutes = require("./routes/authRoutes");
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -42,3 +43,5 @@ app.get("/api/health", (req, res) => {
 app.listen(PORT, () => {
     console.log(`Banana Game running at http://localhost:${PORT}`);
 });
+
+app.use("/api/auth", authRoutes);
