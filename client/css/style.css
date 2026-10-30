@@ -85,3 +85,94 @@ body {
     font-size: 14px;
     text-align: center;
 }
+
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 5%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.game-header h1 {
+    color: #d49b19;
+}
+
+.game-header button {
+    padding: 9px 15px;
+    margin-left: 15px;
+    background: #d49b19;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.game-container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+.game-card,
+.score-card {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    text-align: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.game-card h2,
+.score-card h2 {
+    margin-bottom: 15px;
+}
+
+#game-area {
+    margin-top: 25px;
+}
+
+#game-area button,
+#answerForm button {
+    padding: 12px 20px;
+    margin-top: 15px;
+    background: #e4ad32;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+#puzzleImage {
+    display: block;
+    max-width: 100%;
+    max-height: 350px;
+    margin: 25px auto;
+}
+
+#answerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 300px;
+    margin: 20px auto;
+}
+
+#answerForm input {
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+#score {
+    font-size: 32px;
+    font-weight: bold;
+    color: #d49b19;
+}
+
+#resultMessage {
+    margin-top: 15px;
+}

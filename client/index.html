@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="game-header">
+        <h1>🍌 Banana Game</h1>
+        <div>
+            <span id="username">Player</span>
+            <button id="logoutButton">Log Out</button>
+        </div>
+    </header>
+
+    <main class="game-container">
+        <section class="game-card">
+            <h2>Welcome to Banana Game!</h2>
+            <p>Solve the puzzle and test your skills.</p>
+
+            <div id="game-area">
+                <p id="game-message">Ready to play?</p>
+
+                <button id="startButton">Start Game</button>
+
+                <div id="puzzle-area" hidden>
+                    <img id="puzzleImage" src="" alt="Banana puzzle">
+
+                    <form id="answerForm">
+                        <label for="answer">Your Answer</label>
+                        <input
+                            type="number"
+                            id="answer"
+                            placeholder="Enter your answer"
+                            required
+                        >
+                        <button type="submit">Submit Answer</button>
+                    </form>
+                </div>
+
+                <p id="resultMessage"></p>
+            </div>
+        </section>
+
+        <section class="score-card">
+            <h2>Your Score</h2>
+            <p id="score">0</p>
+        </section>
+    </main>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

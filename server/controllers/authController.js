@@ -56,4 +56,54 @@ async function register(req, res) {
     }
 }
 
-module.exports = { register };
+
+
+
+async function login(req, res) {
+    try {
+        const { email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({
+                message: "Please enter your email and password."
+            });
+        }
+
+        const user = db.prepare(
+            "SELECT * FROM users WHERE email = ?"
+        ).get(email);
+
+        if (!user) {
+            return res.status(401).json({
+                message: "Invalid email or password."
+            });
+        }
+
+        const passwordMatch = await bcrypt.compare(
+            password,
+            user.password_hash
+        );
+
+        if (!passwordMatch) {
+            return res.status(401).json({
+                message: "Invalid email or password."
+            });
+        }
+
+        req.session.userId = user.id;
+
+        return res.status(200).json({
+            message: "Login successful!",
+            username: user.username
+        });
+
+    } catch (error) {
+        console.error("Login error:", error);
+
+        return res.status(500).json({
+            message: "Something went wrong during login."
+        });
+    }
+}
+
+module.exports = { register, login };
