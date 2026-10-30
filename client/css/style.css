@@ -176,3 +176,22 @@ body {
 #resultMessage {
     margin-top: 15px;
 }
+
+
+/* Countdown Timer */
+.timer {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+/* Timer warning when time is running low */
+.timer.warning {
+    background-color: #f8d7da;
+    color: #721c24;
+}

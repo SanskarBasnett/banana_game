@@ -13,8 +13,11 @@ const answerForm = document.getElementById("answerForm");
 const answerInput = document.getElementById("answer");
 const resultMessage = document.getElementById("resultMessage");
 const scoreDisplay = document.getElementById("score");
+const timerDisplay = document.getElementById("timer");
 
 let puzzleActive = false;
+let countdownInterval = null;
+let timeRemaining = 30;
 
 async function updateScore() {
     try {
@@ -25,20 +28,53 @@ async function updateScore() {
     }
 }
 
+// Start the countdown
+function startTimer() {
+    clearInterval(countdownInterval);
+
+    timeRemaining = 30;
+    timerDisplay.textContent = "Time: 30s";
+    timerDisplay.classList.remove("warning");
+
+    countdownInterval = setInterval(() => {
+        timeRemaining--;
+
+        timerDisplay.textContent = `Time: ${timeRemaining}s`;
+
+        if (timeRemaining <= 10) {
+            timerDisplay.classList.add("warning");
+        }
+
+        if (timeRemaining <= 0) {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            puzzleActive = false;
+
+            puzzleArea.hidden = true;
+            gameMessage.textContent = "Time's up!";
+            resultMessage.textContent = "No point awarded. Try another puzzle!";
+            startButton.disabled = false;
+        }
+    }, 1000);
+}
+
+// Start a new puzzle
 async function startGame() {
     try {
         startButton.disabled = true;
         gameMessage.textContent = "Loading puzzle...";
+        resultMessage.textContent = "";
 
         const puzzle = await getPuzzle();
 
         puzzleImage.src = puzzle.imageUrl;
         puzzleArea.hidden = false;
         gameMessage.textContent = "Solve the banana puzzle!";
-        resultMessage.textContent = "";
 
         answerInput.value = "";
         puzzleActive = true;
+
+        startTimer();
 
     } catch (error) {
         gameMessage.textContent = error.message;
@@ -47,6 +83,7 @@ async function startGame() {
     }
 }
 
+// Check the submitted answer
 async function checkAnswer(event) {
     event.preventDefault();
 
@@ -54,19 +91,27 @@ async function checkAnswer(event) {
         return;
     }
 
+    // Prevent multiple submissions
+    puzzleActive = false;
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+
     try {
         const data = await submitAnswer(answerInput.value);
 
         resultMessage.textContent = data.message;
         scoreDisplay.textContent = data.score;
 
-        puzzleActive = false;
         puzzleArea.hidden = true;
         gameMessage.textContent = "Ready for another puzzle?";
 
     } catch (error) {
         resultMessage.textContent = error.message;
+        puzzleArea.hidden = true;
+        gameMessage.textContent = "Ready for another puzzle?";
     }
+
+    startButton.disabled = false;
 }
 
 startButton.addEventListener("click", startGame);

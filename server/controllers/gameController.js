@@ -1,17 +1,20 @@
-
 const { getPuzzle } = require("../services/bananaApiService");
 const db = require("../config/database");
+
+const PUZZLE_TIME_LIMIT = 30 * 1000;
 
 // Get a new puzzle
 async function startPuzzle(req, res) {
     try {
         const puzzle = await getPuzzle();
 
-        // Keep the correct answer in the server session
+        // Store the correct answer and start time in the session
         req.session.currentSolution = puzzle.solution;
+        req.session.puzzleStartedAt = Date.now();
 
         res.json({
             imageUrl: puzzle.imageUrl,
+            timeLimit: 30,
             message: "Puzzle loaded successfully."
         });
 
@@ -37,36 +40,39 @@ function submitAnswer(req, res) {
 
         const playerAnswer = Number(answer);
         const correctAnswer = req.session.currentSolution;
+        const puzzleStartedAt = req.session.puzzleStartedAt;
 
         if (
             !Number.isInteger(playerAnswer) ||
-            correctAnswer === undefined
+            correctAnswer === undefined ||
+            puzzleStartedAt === undefined
         ) {
             return res.status(400).json({
                 message: "Invalid answer or no active puzzle."
             });
         }
 
+        // Check whether the 30-second time limit has expired
+        const elapsedTime = Date.now() - puzzleStartedAt;
+
+        if (elapsedTime >= PUZZLE_TIME_LIMIT) {
+            delete req.session.currentSolution;
+            delete req.session.puzzleStartedAt;
+
+            return res.status(410).json({
+                message: "Time's up! No point was awarded."
+            });
+        }
+
         // Allow only one submission per puzzle
         delete req.session.currentSolution;
+        delete req.session.puzzleStartedAt;
 
         if (playerAnswer === correctAnswer) {
             db.prepare(`
                 INSERT INTO scores (user_id, score)
                 VALUES (?, ?)
             `).run(req.session.userId, 1);
-
-            const totalScore = db.prepare(`
-                SELECT COALESCE(SUM(score), 0) AS total
-                FROM scores
-                WHERE user_id = ?
-            `).get(req.session.userId).total;
-
-            return res.json({
-                correct: true,
-                message: "Correct! You earned 1 point.",
-                score: totalScore
-            });
         }
 
         const totalScore = db.prepare(`
@@ -74,6 +80,14 @@ function submitAnswer(req, res) {
             FROM scores
             WHERE user_id = ?
         `).get(req.session.userId).total;
+
+        if (playerAnswer === correctAnswer) {
+            return res.json({
+                correct: true,
+                message: "Correct! You earned 1 point.",
+                score: totalScore
+            });
+        }
 
         return res.json({
             correct: false,
