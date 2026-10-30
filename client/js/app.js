@@ -39,3 +39,5 @@ if (logoutButton) {
         }
     });
 }
+
+import "./game/gameController.js";
