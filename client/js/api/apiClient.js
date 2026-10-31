@@ -35,3 +35,8 @@ export function getScores() {
 export function getLeaderboard() {
     return apiRequest("/api/game/leaderboard");
 }
+
+// Get the solution for the current puzzle
+export function getSolution() {
+    return apiRequest("/api/game/solution");
+}

@@ -239,3 +239,11 @@ body {
 .leaderboard-table tr:last-child td {
     border-bottom: none;
 }
+
+.solution-section {
+    margin-top: 15px;
+}
+
+#solutionMessage {
+    margin-top: 15px;
+}

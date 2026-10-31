@@ -1,6 +1,7 @@
 
 import {
     getPuzzle,
+    getSolution,
     submitAnswer,
     getScores,
     getLeaderboard
@@ -16,6 +17,9 @@ const resultMessage = document.getElementById("resultMessage");
 const scoreDisplay = document.getElementById("score");
 const timerDisplay = document.getElementById("timer");
 const leaderboardDisplay = document.getElementById("leaderboard");
+
+const solutionButton = document.getElementById("solutionButton");
+const solutionMessage = document.getElementById("solutionMessage");
 
 let puzzleActive = false;
 let countdownInterval = null;
@@ -115,8 +119,10 @@ function startTimer() {
 async function startGame() {
     try {
         startButton.disabled = true;
+        solutionButton.disabled = true;
         gameMessage.textContent = "Loading puzzle...";
         resultMessage.textContent = "";
+        solutionMessage.textContent = "";
 
         const puzzle = await getPuzzle();
 
@@ -125,6 +131,12 @@ async function startGame() {
         gameMessage.textContent = "Solve the banana puzzle!";
 
         answerInput.value = "";
+        answerInput.disabled = false;
+        answerForm.querySelector('button[type="submit"]').disabled = false;
+
+        solutionButton.disabled = false;
+        solutionButton.textContent = "Show Solution";
+
         puzzleActive = true;
 
         startTimer();
@@ -136,6 +148,38 @@ async function startGame() {
     }
 }
 
+// Show the correct solution without ending the puzzle
+async function revealSolution() {
+    if (!puzzleActive) {
+        return;
+    }
+
+    solutionButton.disabled = true;
+
+    try {
+        const data = await getSolution();
+
+        solutionMessage.textContent = `Correct solution: ${data.solution}`;
+        resultMessage.textContent = "You can still submit your answer!";
+
+        // Keep the puzzle, timer and answer form active
+
+    } catch (error) {
+        solutionMessage.textContent = error.message;
+
+        if (error.status === 410) {
+            puzzleActive = false;
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+
+            puzzleArea.hidden = true;
+            gameMessage.textContent = "Time's up!";
+            resultMessage.textContent = "No point awarded. Try another puzzle!";
+            startButton.disabled = false;
+        }
+    }
+}
+
 // Check the submitted answer
 async function checkAnswer(event) {
     event.preventDefault();
@@ -144,10 +188,13 @@ async function checkAnswer(event) {
         return;
     }
 
-    // Prevent multiple submissions
     puzzleActive = false;
     clearInterval(countdownInterval);
     countdownInterval = null;
+
+    solutionButton.disabled = true;
+    answerInput.disabled = true;
+    answerForm.querySelector('button[type="submit"]').disabled = true;
 
     try {
         const data = await submitAnswer(answerInput.value);
@@ -155,7 +202,6 @@ async function checkAnswer(event) {
         resultMessage.textContent = data.message;
         scoreDisplay.textContent = data.score;
 
-        // Refresh leaderboard after submitting an answer
         await updateLeaderboard();
 
         puzzleArea.hidden = true;
@@ -170,8 +216,10 @@ async function checkAnswer(event) {
     startButton.disabled = false;
 }
 
+// Event listeners
 startButton.addEventListener("click", startGame);
 answerForm.addEventListener("submit", checkAnswer);
+solutionButton.addEventListener("click", revealSolution);
 
 updateScore();
 updateLeaderboard();

@@ -1,3 +1,4 @@
+
 const { getPuzzle } = require("../services/bananaApiService");
 const db = require("../config/database");
 
@@ -8,7 +9,6 @@ async function startPuzzle(req, res) {
     try {
         const puzzle = await getPuzzle();
 
-        // Store the correct answer and start time in the session
         req.session.currentSolution = puzzle.solution;
         req.session.puzzleStartedAt = Date.now();
 
@@ -23,6 +23,47 @@ async function startPuzzle(req, res) {
 
         res.status(500).json({
             message: "Unable to load a puzzle. Please try again."
+        });
+    }
+}
+
+// Reveal the solution without ending the puzzle
+function showSolution(req, res) {
+    try {
+        const correctAnswer = req.session.currentSolution;
+        const puzzleStartedAt = req.session.puzzleStartedAt;
+
+        if (
+            correctAnswer === undefined ||
+            puzzleStartedAt === undefined
+        ) {
+            return res.status(400).json({
+                message: "No active puzzle."
+            });
+        }
+
+        const elapsedTime = Date.now() - puzzleStartedAt;
+
+        if (elapsedTime >= PUZZLE_TIME_LIMIT) {
+            delete req.session.currentSolution;
+            delete req.session.puzzleStartedAt;
+
+            return res.status(410).json({
+                message: "Time's up! The solution is no longer available."
+            });
+        }
+
+        // Keep the answer in the session for submission
+        res.json({
+            solution: correctAnswer,
+            message: "Here is the correct solution."
+        });
+
+    } catch (error) {
+        console.error("Show solution error:", error);
+
+        res.status(500).json({
+            message: "Unable to show the solution."
         });
     }
 }
@@ -52,7 +93,6 @@ function submitAnswer(req, res) {
             });
         }
 
-        // Check whether the 30-second time limit has expired
         const elapsedTime = Date.now() - puzzleStartedAt;
 
         if (elapsedTime >= PUZZLE_TIME_LIMIT) {
@@ -64,7 +104,7 @@ function submitAnswer(req, res) {
             });
         }
 
-        // Allow only one submission per puzzle
+        // End the puzzle after one submission
         delete req.session.currentSolution;
         delete req.session.puzzleStartedAt;
 
@@ -117,7 +157,6 @@ function getScores(req, res) {
     });
 }
 
-
 // Get the global top 10 leaderboard
 function getLeaderboard(req, res) {
     try {
@@ -147,6 +186,7 @@ function getLeaderboard(req, res) {
 
 module.exports = {
     startPuzzle,
+    showSolution,
     submitAnswer,
     getScores,
     getLeaderboard
