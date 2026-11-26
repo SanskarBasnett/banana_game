@@ -6,10 +6,31 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Nunito', Arial, sans-serif;
     background: #f5f5dc;
     color: #333;
+    line-height: 1.5;
     min-height: 100vh;
+}
+
+button,
+input {
+    font-family: inherit;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+button:focus-visible,
+a:focus-visible {
+    outline: 3px solid #c99119;
+    outline-offset: 2px;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 .auth-container {
@@ -51,7 +72,13 @@ body {
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    font-size: 15px;
+    font-size: 16px;
+    transition: border-color 0.2s, outline 0.2s;
+}
+
+.auth-card input:focus {
+    outline: 2px solid #e8b52f;
+    border-color: transparent;
 }
 
 .auth-card button {
@@ -165,6 +192,7 @@ body {
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 6px;
+    font-size: 16px;
 }
 
 #score {
@@ -175,6 +203,30 @@ body {
 
 #resultMessage {
     margin-top: 15px;
+    font-size: 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 10px 16px;
+}
+
+#resultMessage:empty,
+#solutionMessage:empty {
+    display: none;
+}
+
+#resultMessage.result-correct {
+    background: #d4edda;
+    color: #155724;
+}
+
+#resultMessage.result-wrong {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+#resultMessage.result-info {
+    background: #fff3cd;
+    color: #856404;
 }
 
 
@@ -246,4 +298,464 @@ body {
 
 #solutionMessage {
     margin-top: 15px;
+}
+
+/* Floating banana background for login and register */
+
+.auth-page {
+    position: relative;
+    overflow-x: hidden;
+}
+
+.banana-background {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.banana-background span {
+    position: absolute;
+    font-size: 35px;
+    opacity: 0.5;
+    animation: floatBanana 5s ease-in-out infinite alternate;
+}
+
+.banana-background span:nth-child(1) {
+    left: 5%;
+    top: 15%;
+}
+
+.banana-background span:nth-child(2) {
+    left: 15%;
+    top: 65%;
+    font-size: 45px;
+}
+
+.banana-background span:nth-child(3) {
+    left: 27%;
+    top: 35%;
+}
+
+.banana-background span:nth-child(4) {
+    left: 38%;
+    top: 75%;
+    font-size: 50px;
+}
+
+.banana-background span:nth-child(5) {
+    left: 50%;
+    top: 20%;
+}
+
+.banana-background span:nth-child(6) {
+    left: 62%;
+    top: 55%;
+    font-size: 42px;
+}
+
+.banana-background span:nth-child(7) {
+    left: 73%;
+    top: 10%;
+}
+
+.banana-background span:nth-child(8) {
+    left: 83%;
+    top: 70%;
+    font-size: 48px;
+}
+
+.banana-background span:nth-child(9) {
+    left: 92%;
+    top: 40%;
+}
+
+.banana-background span:nth-child(10) {
+    left: 42%;
+    top: 50%;
+}
+
+@keyframes floatBanana {
+    from {
+        transform: translateY(-15px) rotate(-15deg);
+    }
+
+    to {
+        transform: translateY(15px) rotate(15deg);
+    }
+}
+
+/* Keep the original login and registration cards above the bananas */
+
+.auth-container {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* =================================
+   BANANA GAME - MODERN GAME UI
+================================= */
+
+.game-page {
+    background: #fffbea;
+    color: #403b2f;
+}
+
+/* Header */
+
+.game-page .game-header {
+    padding: 20px 6%;
+    background: #ffffff;
+    box-shadow: 0 3px 15px rgba(120, 95, 30, 0.07);
+}
+
+.game-page .game-header h1 {
+    color: #d49b19;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.game-page .game-header > div {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.game-page #username {
+    font-weight: 600;
+    color: #514a38;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.game-page #logoutButton {
+    background: #e4ad32;
+    border-radius: 9px;
+    padding: 10px 19px;
+    margin-left: 0;
+    font-weight: bold;
+    transition: 0.2s ease;
+}
+
+.game-page #logoutButton:hover {
+    background: #c99119;
+    transform: translateY(-2px);
+}
+
+/* Main layout */
+
+.game-page .game-container {
+    max-width: 760px;
+    margin: 45px auto;
+    padding: 20px;
+}
+
+/* Welcome card */
+
+.game-page .game-card {
+    padding: 45px 30px;
+    border-radius: 18px;
+    box-shadow: 0 5px 22px rgba(120, 95, 30, 0.09);
+}
+
+.game-page .game-card h2 {
+    font-size: 30px;
+    color: #55451f;
+    margin-bottom: 12px;
+}
+
+.game-page .game-card > p {
+    color: #77705e;
+}
+
+/* Score card */
+
+.game-page .score-card {
+    padding: 28px;
+    border-radius: 18px;
+    box-shadow: 0 5px 22px rgba(120, 95, 30, 0.08);
+}
+
+.game-page .score-card h2 {
+    color: #55451f;
+    font-size: 22px;
+}
+
+.game-page .score-label {
+    color: #776e59;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+}
+
+.game-page #score {
+    font-size: 56px;
+    color: #e0a51d;
+    font-weight: 800;
+    margin: 4px 0 2px;
+    line-height: 1;
+}
+
+.game-page .score-sublabel {
+    color: #7f7046;
+    font-size: 13px;
+}
+
+/* Leaderboard */
+
+.game-page .leaderboard-card {
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 5px 22px rgba(120, 95, 30, 0.08);
+    margin-top: 25px;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+.game-page .score-card {
+    min-width: 0;
+}
+
+.game-page .leaderboard-table td:nth-child(2) {
+    overflow-wrap: anywhere;
+}
+
+.game-page .leaderboard-card h2 {
+    color: #55451f;
+    font-size: 23px;
+}
+
+.game-page .leaderboard-card > p {
+    color: #776e59;
+}
+
+.game-page .leaderboard-table th {
+    background: #fff7dc;
+    color: #80651e;
+    font-weight: 700;
+}
+
+.game-page .leaderboard-table td {
+    padding: 15px 12px;
+    transition: background 0.15s;
+}
+
+.game-page .leaderboard-table tr:hover td {
+    background: #fffdf5;
+}
+
+/* Current player highlight
+   Add current-user-row to the logged-in user's table row */
+
+.game-page .leaderboard-table .current-user-row td {
+    background: #fff4cc;
+    font-weight: bold;
+}
+
+.game-page .leaderboard-table .current-user-row td:first-child {
+    border-left: 4px solid #e8b52f;
+}
+
+/* Puzzle area */
+
+.game-page #puzzleImage {
+    border-radius: 12px;
+    background: #fffdf5;
+}
+
+.game-page #answerForm input {
+    border: 1px solid #e8dfc8;
+    border-radius: 9px;
+    padding: 13px;
+}
+
+.game-page #answerForm input:focus {
+    outline: 2px solid #e8b52f;
+    border-color: transparent;
+}
+
+/* Other game buttons */
+
+.game-page #game-area button:not(#startButton):not(.btn-secondary),
+.game-page #answerForm button {
+    border-radius: 9px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.game-page #game-area button:not(#startButton):not(.btn-secondary):hover,
+.game-page #answerForm button:hover {
+    filter: brightness(0.95);
+}
+
+/* Start button pulse animation */
+
+@keyframes pulse-glow {
+    0%   { box-shadow: 0 4px 10px rgba(212, 155, 25, 0.25); }
+    50%  { box-shadow: 0 4px 22px rgba(212, 155, 25, 0.55); }
+    100% { box-shadow: 0 4px 10px rgba(212, 155, 25, 0.25); }
+}
+
+.game-page #startButton {
+    background: #e8b52f;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 38px;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 22px;
+    animation: pulse-glow 2s ease-in-out infinite;
+    transition: 0.2s ease;
+}
+
+.game-page #startButton:hover {
+    background: #d49b19;
+    transform: translateY(-2px);
+    animation: none;
+    box-shadow: 0 6px 18px rgba(212, 155, 25, 0.45);
+}
+
+.game-page #startButton:disabled {
+    background: #e8b52f;
+    animation: none;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Secondary / outline button (Show Solution) */
+
+.game-page .btn-secondary {
+    background: transparent !important;
+    color: #c99119 !important;
+    border: 2px solid #e8b52f !important;
+    border-radius: 9px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    margin-top: 12px;
+}
+
+.game-page .btn-secondary:hover {
+    background: #fffbea !important;
+    border-color: #c99119 !important;
+    transform: translateY(-1px);
+    filter: none !important;
+}
+
+/* Result message color-coded feedback */
+
+.game-page #resultMessage {
+    margin-top: 15px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: 12px 18px;
+    transition: 0.2s ease;
+}
+
+.game-page #resultMessage.result-correct {
+    background: #d4edda;
+    color: #155724;
+}
+
+.game-page #resultMessage.result-wrong {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.game-page #resultMessage.result-info {
+    background: #fff3cd;
+    color: #856404;
+}
+
+/* Desktop two-column layout: score + leaderboard side by side */
+
+@media (min-width: 700px) {
+    .game-page .game-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        align-items: start;
+    }
+
+    .game-page .game-card {
+        grid-column: 1 / -1;
+    }
+
+    .game-page .leaderboard-card {
+        margin-top: 0;
+    }
+}
+
+/* Solution reveal message */
+
+.game-page #solutionMessage {
+    color: #80651e;
+    font-size: 15px;
+    font-weight: 700;
+}
+
+/* Respect users who prefer less motion */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Mobile layout */
+
+@media (max-width: 600px) {
+    .auth-card {
+        padding: 26px 20px;
+    }
+
+    .game-page .game-header {
+        padding: 16px 5%;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .game-page .game-header > div {
+        flex-wrap: wrap;
+    }
+
+    .game-page #username {
+        max-width: 150px;
+    }
+
+    .game-page .game-header h1 {
+        font-size: 23px;
+    }
+
+    .game-page .game-container {
+        margin: 20px auto;
+        padding: 12px;
+    }
+
+    .game-page .game-card {
+        padding: 30px 18px;
+    }
+
+    .game-page .game-card h2 {
+        font-size: 24px;
+    }
+
+    .game-page .leaderboard-card {
+        padding: 20px 12px;
+        overflow-x: auto;
+    }
 }

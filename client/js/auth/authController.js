@@ -10,6 +10,9 @@ if (registerForm) {
         const password = document.getElementById("password").value;
 
         const message = document.getElementById("message");
+        const submitButton = registerForm.querySelector('button[type="submit"]');
+
+        submitButton.disabled = true;
 
         try {
             const response = await fetch("/api/auth/register", {
@@ -30,10 +33,16 @@ if (registerForm) {
 
             if (response.ok) {
                 registerForm.reset();
+
+                setTimeout(() => {
+                    window.location.href = "index.html";
+                }, 800);
             }
         } catch (error) {
             message.textContent = "Unable to connect to the server.";
             console.error(error);
+        } finally {
+            submitButton.disabled = false;
         }
     });
 }
@@ -49,6 +58,9 @@ if (loginForm) {
         const password = document.getElementById("password").value;
 
         const message = document.getElementById("message");
+        const submitButton = loginForm.querySelector('button[type="submit"]');
+
+        submitButton.disabled = true;
 
         try {
             const response = await fetch("/api/auth/login", {
@@ -69,6 +81,8 @@ if (loginForm) {
         } catch (error) {
             message.textContent = "Unable to connect to the server.";
             console.error(error);
+        } finally {
+            submitButton.disabled = false;
         }
     });
 }

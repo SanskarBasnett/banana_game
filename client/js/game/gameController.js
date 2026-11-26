@@ -21,9 +21,25 @@ const leaderboardDisplay = document.getElementById("leaderboard");
 const solutionButton = document.getElementById("solutionButton");
 const solutionMessage = document.getElementById("solutionMessage");
 
+const PUZZLE_SECONDS = 30;
+
 let puzzleActive = false;
 let countdownInterval = null;
-let timeRemaining = 30;
+let puzzleEndsAt = 0;
+let timeRemaining = PUZZLE_SECONDS;
+
+function setResult(message, type) {
+    resultMessage.textContent = message;
+    resultMessage.classList.remove(
+        "result-correct",
+        "result-wrong",
+        "result-info"
+    );
+
+    if (type) {
+        resultMessage.classList.add(`result-${type}`);
+    }
+}
 
 async function updateScore() {
     try {
@@ -45,24 +61,43 @@ async function updateLeaderboard() {
             return;
         }
 
+        const currentUsername =
+            document.getElementById("username").textContent.trim();
+
         const table = document.createElement("table");
         table.classList.add("leaderboard-table");
 
+        const thead = document.createElement("thead");
         const header = document.createElement("tr");
 
         ["Rank", "Player", "Score"].forEach(title => {
             const th = document.createElement("th");
+            th.scope = "col";
             th.textContent = title;
             header.appendChild(th);
         });
 
-        table.appendChild(header);
+        thead.appendChild(header);
+
+        const tbody = document.createElement("tbody");
 
         data.leaderboard.forEach((player, index) => {
             const row = document.createElement("tr");
 
+            // Highlight the logged-in player
+            if (player.username === currentUsername) {
+                row.classList.add("current-user-row");
+            }
+
             const rankCell = document.createElement("td");
-            rankCell.textContent = index + 1;
+
+            const medals = ["🥇", "🥈", "🥉"];
+
+            if (index < 3) {
+                rankCell.textContent = `${medals[index]} ${index + 1}`;
+            } else {
+                rankCell.textContent = index + 1;
+            }
 
             const nameCell = document.createElement("td");
             nameCell.textContent = player.username;
@@ -74,9 +109,11 @@ async function updateLeaderboard() {
             row.appendChild(nameCell);
             row.appendChild(scoreCell);
 
-            table.appendChild(row);
+            tbody.appendChild(row);
         });
 
+        table.appendChild(thead);
+        table.appendChild(tbody);
         leaderboardDisplay.appendChild(table);
 
     } catch (error) {
@@ -85,43 +122,60 @@ async function updateLeaderboard() {
     }
 }
 
+function stopCountdown() {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+}
+
+function endPuzzle() {
+    stopCountdown();
+    puzzleActive = false;
+    puzzleArea.hidden = true;
+    startButton.hidden = false;
+    startButton.disabled = false;
+}
+
 // Start the countdown
 function startTimer() {
-    clearInterval(countdownInterval);
+    stopCountdown();
 
-    timeRemaining = 30;
-    timerDisplay.textContent = "Time: 30s";
+    puzzleEndsAt = Date.now() + PUZZLE_SECONDS * 1000;
     timerDisplay.classList.remove("warning");
 
-    countdownInterval = setInterval(() => {
-        timeRemaining--;
+    updateTimer();
 
-        timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    // Derive the remaining time from a timestamp so throttled
+    // background tabs do not fall out of sync.
+    countdownInterval = setInterval(updateTimer, 250);
+}
 
-        if (timeRemaining <= 10) {
-            timerDisplay.classList.add("warning");
-        }
+function updateTimer() {
+    timeRemaining = Math.max(
+        0,
+        Math.ceil((puzzleEndsAt - Date.now()) / 1000)
+    );
 
-        if (timeRemaining <= 0) {
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-            puzzleActive = false;
+    timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    timerDisplay.classList.toggle(
+        "warning",
+        timeRemaining <= 10 && timeRemaining > 0
+    );
 
-            puzzleArea.hidden = true;
-            gameMessage.textContent = "Time's up!";
-            resultMessage.textContent = "No point awarded. Try another puzzle!";
-            startButton.disabled = false;
-        }
-    }, 1000);
+    if (timeRemaining <= 0 && puzzleActive) {
+        endPuzzle();
+        gameMessage.textContent = "Time's up!";
+        setResult("No point awarded. Try another puzzle!", "info");
+    }
 }
 
 // Start a new puzzle
 async function startGame() {
     try {
         startButton.disabled = true;
+        startButton.hidden = true;
         solutionButton.disabled = true;
         gameMessage.textContent = "Loading puzzle...";
-        resultMessage.textContent = "";
+        setResult("", null);
         solutionMessage.textContent = "";
 
         const puzzle = await getPuzzle();
@@ -143,7 +197,7 @@ async function startGame() {
 
     } catch (error) {
         gameMessage.textContent = error.message;
-    } finally {
+        startButton.hidden = false;
         startButton.disabled = false;
     }
 }
@@ -160,22 +214,17 @@ async function revealSolution() {
         const data = await getSolution();
 
         solutionMessage.textContent = `Correct solution: ${data.solution}`;
-        resultMessage.textContent = "You can still submit your answer!";
-
-        // Keep the puzzle, timer and answer form active
+        setResult("You can still submit your answer!", "info");
 
     } catch (error) {
         solutionMessage.textContent = error.message;
 
         if (error.status === 410) {
-            puzzleActive = false;
-            clearInterval(countdownInterval);
-            countdownInterval = null;
-
-            puzzleArea.hidden = true;
+            endPuzzle();
             gameMessage.textContent = "Time's up!";
-            resultMessage.textContent = "No point awarded. Try another puzzle!";
-            startButton.disabled = false;
+            setResult("No point awarded. Try another puzzle!", "info");
+        } else {
+            solutionButton.disabled = false;
         }
     }
 }
@@ -189,8 +238,7 @@ async function checkAnswer(event) {
     }
 
     puzzleActive = false;
-    clearInterval(countdownInterval);
-    countdownInterval = null;
+    stopCountdown();
 
     solutionButton.disabled = true;
     answerInput.disabled = true;
@@ -199,21 +247,17 @@ async function checkAnswer(event) {
     try {
         const data = await submitAnswer(answerInput.value);
 
-        resultMessage.textContent = data.message;
+        setResult(data.message, data.correct ? "correct" : "wrong");
         scoreDisplay.textContent = data.score;
 
         await updateLeaderboard();
 
-        puzzleArea.hidden = true;
-        gameMessage.textContent = "Ready for another puzzle?";
-
     } catch (error) {
-        resultMessage.textContent = error.message;
-        puzzleArea.hidden = true;
-        gameMessage.textContent = "Ready for another puzzle?";
+        setResult(error.message, "info");
     }
 
-    startButton.disabled = false;
+    gameMessage.textContent = "Ready for another puzzle?";
+    endPuzzle();
 }
 
 // Event listeners

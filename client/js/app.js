@@ -5,7 +5,7 @@ async function checkAuthentication() {
 
         if (!response.ok) {
             window.location.href = "login.html";
-            return;
+            return false;
         }
 
         const data = await response.json();
@@ -13,19 +13,21 @@ async function checkAuthentication() {
         document.getElementById("username").textContent =
             data.user.username;
 
+        return true;
+
     } catch (error) {
         console.error("Authentication error:", error);
         window.location.href = "login.html";
+        return false;
     }
 }
-
-checkAuthentication();
-
 
 const logoutButton = document.getElementById("logoutButton");
 
 if (logoutButton) {
     logoutButton.addEventListener("click", async () => {
+        logoutButton.disabled = true;
+
         try {
             const response = await fetch("/api/auth/logout", {
                 method: "POST"
@@ -36,8 +38,14 @@ if (logoutButton) {
             }
         } catch (error) {
             console.error("Logout error:", error);
+        } finally {
+            logoutButton.disabled = false;
         }
     });
 }
 
-import "./game/gameController.js";
+const isAuthenticated = await checkAuthentication();
+
+if (isAuthenticated) {
+    await import("./game/gameController.js");
+}
