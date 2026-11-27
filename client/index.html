@@ -4,33 +4,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Banana Game</title>
+    <title>Player Dashboard | Banana Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍌</text></svg>">
 </head>
-<body class="game-page">
+<body class="game-page dashboard-page">
 
-    <header class="game-header">
-        <h1>🍌 Banana Game</h1>
-        <div>
-            <span id="username">Player</span>
-            <button id="logoutButton">Log Out</button>
+    <header class="dashboard-header">
+        <a class="brand" href="index.html">🍌 Banana Game</a>
+
+        <div class="player-menu">
+            <div class="player-chip">
+                <span class="avatar" id="playerAvatar">P</span>
+                <span class="player-name-group">
+                    <span id="username">Player</span>
+                    <span class="player-rank" id="headerRank">Rank —</span>
+                </span>
+            </div>
+
+            <button id="editProfileButton" class="btn btn-primary" type="button">
+                Edit Profile
+            </button>
+            <button id="logoutButton" class="btn btn-ghost" type="button">
+                Log Out
+            </button>
         </div>
     </header>
 
-    <main class="game-container">
+    <main class="dashboard">
 
-        <section class="game-card">
-            <h2>Welcome to Banana Game!</h2>
-            <p>Solve the puzzle and test your skills.</p>
+        <section class="welcome-card">
+            <div class="welcome-avatar" id="welcomeAvatar">P</div>
 
-            <div id="game-area">
-                <p id="game-message" aria-live="polite">Ready to play?</p>
+            <div class="welcome-text">
+                <p class="eyebrow">Player Dashboard</p>
+                <h1>Welcome back, <span id="welcomeName">Player</span>!</h1>
+                <p>Solve puzzles, earn points, and climb the global leaderboard.</p>
+            </div>
+        </section>
 
-                <button id="startButton">Start Game</button>
+        <section class="stats-grid" aria-label="Player statistics">
+
+            <article class="stat-card">
+                <span class="stat-icon" aria-hidden="true">⭐</span>
+                <p class="stat-label">Total Score</p>
+                <p class="stat-value" id="score">0</p>
+                <p class="stat-note">points earned</p>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-icon" aria-hidden="true">🏆</span>
+                <p class="stat-label">Global Rank</p>
+                <p class="stat-value" id="playerRank">—</p>
+                <p class="stat-note">on the leaderboard</p>
+            </article>
+
+            <article class="stat-card">
+                <span class="stat-icon" aria-hidden="true">📅</span>
+                <p class="stat-label">Member Since</p>
+                <p class="stat-value stat-value-small" id="playerSince">—</p>
+                <p class="stat-note">joined Banana Game</p>
+            </article>
+
+        </section>
+
+        <div class="dashboard-grid">
+
+            <section class="game-card" aria-labelledby="playTitle">
+
+                <div class="card-heading">
+                    <div>
+                        <p class="eyebrow">Play</p>
+                        <h2 id="playTitle">Banana Puzzle</h2>
+                    </div>
+
+                    <span id="game-message" class="status-pill" aria-live="polite">
+                        Ready to play?
+                    </span>
+                </div>
+
+                <button id="startButton" type="button">Start Game</button>
 
                 <div id="puzzle-area" hidden>
                     <div id="timer" class="timer" role="timer" aria-live="off">Time: 30s</div>
@@ -57,26 +113,95 @@
                 </div>
 
                 <p id="resultMessage" aria-live="polite"></p>
-            </div>
-        </section>
 
-        <section class="score-card">
-            <h2>Your Score</h2>
-            <p class="score-label">Total Score</p>
-            <p id="score">0</p>
-            <p class="score-sublabel">points</p>
-        </section>
+            </section>
 
-        <section class="leaderboard-card">
-            <h2>Global Leaderboard</h2>
-            <p>Top 10 Players</p>
+            <section class="leaderboard-card" aria-labelledby="leaderboardTitle">
+                <p class="eyebrow">Community</p>
+                <h2 id="leaderboardTitle">Global Leaderboard</h2>
+                <p>Top 10 Players</p>
 
-            <div id="leaderboard">
-                <p>Loading leaderboard...</p>
-            </div>
-        </section>
+                <div id="leaderboard">
+                    <p>Loading leaderboard...</p>
+                </div>
+            </section>
+
+        </div>
 
     </main>
+
+    <dialog id="profileDialog" class="profile-dialog" aria-labelledby="profileTitle">
+
+        <div class="dialog-header">
+            <div>
+                <p class="eyebrow">Account</p>
+                <h2 id="profileTitle">Edit Profile</h2>
+            </div>
+
+            <button
+                type="button"
+                id="closeProfileButton"
+                class="icon-button"
+                aria-label="Close profile editor"
+            >
+                ×
+            </button>
+        </div>
+
+        <form id="profileForm">
+
+            <label for="profileUsername">Username</label>
+            <input
+                type="text"
+                id="profileUsername"
+                autocomplete="username"
+                minlength="3"
+                required
+            >
+
+            <label for="profileEmail">Email Address</label>
+            <input
+                type="email"
+                id="profileEmail"
+                autocomplete="email"
+                required
+            >
+
+            <div class="password-fields">
+                <label for="profileNewPassword">
+                    New Password <span class="optional">(optional)</span>
+                </label>
+                <input
+                    type="password"
+                    id="profileNewPassword"
+                    autocomplete="new-password"
+                    minlength="8"
+                    placeholder="Leave blank to keep it"
+                >
+
+                <label for="profileConfirmPassword">Confirm Password</label>
+                <input
+                    type="password"
+                    id="profileConfirmPassword"
+                    autocomplete="new-password"
+                    placeholder="Re-enter new password"
+                >
+            </div>
+
+            <p id="profileMessage" class="profile-message" aria-live="polite"></p>
+
+            <div class="dialog-actions">
+                <button type="button" id="cancelProfileButton" class="btn btn-ghost">
+                    Cancel
+                </button>
+                <button type="submit" id="saveProfileButton" class="btn btn-primary">
+                    Save Changes
+                </button>
+            </div>
+
+        </form>
+
+    </dialog>
 
     <script type="module" src="js/app.js"></script>
 </body>

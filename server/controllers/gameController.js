@@ -157,6 +157,61 @@ function getScores(req, res) {
     });
 }
 
+// Get dashboard statistics for the logged-in player
+function getPlayerStats(req, res) {
+    try {
+        const userId = req.session.userId;
+
+        const user = db.prepare(
+            "SELECT username, created_at FROM users WHERE id = ?"
+        ).get(userId);
+
+        if (!user) {
+            return res.status(401).json({
+                message: "User account not found."
+            });
+        }
+
+        const stats = db.prepare(`
+            SELECT COALESCE(SUM(score), 0) AS totalScore
+            FROM scores
+            WHERE user_id = ?
+        `).get(userId);
+
+        const rank = db.prepare(`
+            SELECT COUNT(*) + 1 AS rank
+            FROM (
+                SELECT
+                    users.id,
+                    users.username,
+                    COALESCE(SUM(scores.score), 0) AS total
+                FROM users
+                LEFT JOIN scores ON users.id = scores.user_id
+                GROUP BY users.id, users.username
+            )
+            WHERE total > ?
+               OR (total = ? AND username < ?)
+        `).get(
+            stats.totalScore,
+            stats.totalScore,
+            user.username
+        ).rank;
+
+        res.json({
+            totalScore: stats.totalScore,
+            rank,
+            memberSince: user.created_at
+        });
+
+    } catch (error) {
+        console.error("Player stats error:", error);
+
+        res.status(500).json({
+            message: "Unable to load your statistics."
+        });
+    }
+}
+
 // Get the global top 10 leaderboard
 function getLeaderboard(req, res) {
     try {
@@ -189,5 +244,6 @@ module.exports = {
     showSolution,
     submitAnswer,
     getScores,
+    getPlayerStats,
     getLeaderboard
 };

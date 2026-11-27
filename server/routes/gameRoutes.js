@@ -7,6 +7,7 @@ const {
     showSolution,
     submitAnswer,
     getScores,
+    getPlayerStats,
     getLeaderboard
 } = require("../controllers/gameController");
 
@@ -16,6 +17,7 @@ router.get("/puzzle", requireAuth, startPuzzle);
 router.get("/solution", requireAuth, showSolution);
 router.post("/answer", requireAuth, submitAnswer);
 router.get("/scores", requireAuth, getScores);
+router.get("/stats", requireAuth, getPlayerStats);
 router.get("/leaderboard", requireAuth, getLeaderboard);
 
 module.exports = router;

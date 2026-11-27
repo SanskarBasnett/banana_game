@@ -34,6 +34,21 @@ export function getScores() {
     return apiRequest("/api/game/scores");
 }
 
+export function getPlayerStats() {
+    return apiRequest("/api/game/stats");
+}
+
+export function getMe() {
+    return apiRequest("/api/auth/me");
+}
+
+export function updateProfile(profile) {
+    return apiRequest("/api/auth/profile", {
+        method: "PUT",
+        body: JSON.stringify(profile)
+    });
+}
+
 export function getLeaderboard() {
     return apiRequest("/api/game/leaderboard");
 }

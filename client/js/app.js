@@ -1,4 +1,6 @@
 
+import { setPlayerName } from "./ui/Ui.controller.js";
+
 async function checkAuthentication() {
     try {
         const response = await fetch("/api/auth/me");
@@ -10,8 +12,7 @@ async function checkAuthentication() {
 
         const data = await response.json();
 
-        document.getElementById("username").textContent =
-            data.user.username;
+        setPlayerName(data.user.username);
 
         return true;
 
@@ -48,4 +49,5 @@ const isAuthenticated = await checkAuthentication();
 
 if (isAuthenticated) {
     await import("./game/gameController.js");
+    await import("./profile/profileController.js");
 }

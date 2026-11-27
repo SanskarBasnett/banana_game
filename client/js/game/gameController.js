@@ -3,9 +3,10 @@ import {
     getPuzzle,
     getSolution,
     submitAnswer,
-    getScores,
+    getPlayerStats,
     getLeaderboard
 } from "../api/apiClient.js";
+import { formatMemberSince } from "../ui/Ui.controller.js";
 
 const startButton = document.getElementById("startButton");
 const puzzleArea = document.getElementById("puzzle-area");
@@ -15,6 +16,9 @@ const answerForm = document.getElementById("answerForm");
 const answerInput = document.getElementById("answer");
 const resultMessage = document.getElementById("resultMessage");
 const scoreDisplay = document.getElementById("score");
+const rankDisplay = document.getElementById("playerRank");
+const sinceDisplay = document.getElementById("playerSince");
+const headerRank = document.getElementById("headerRank");
 const timerDisplay = document.getElementById("timer");
 const leaderboardDisplay = document.getElementById("leaderboard");
 
@@ -41,12 +45,19 @@ function setResult(message, type) {
     }
 }
 
-async function updateScore() {
+async function updateStats() {
     try {
-        const data = await getScores();
-        scoreDisplay.textContent = data.score;
+        const data = await getPlayerStats();
+
+        scoreDisplay.textContent = data.totalScore;
+        rankDisplay.textContent = `#${data.rank}`;
+        sinceDisplay.textContent = formatMemberSince(data.memberSince);
+
+        if (headerRank) {
+            headerRank.textContent = `Rank #${data.rank}`;
+        }
     } catch (error) {
-        console.error("Score loading error:", error);
+        console.error("Stats loading error:", error);
     }
 }
 
@@ -214,7 +225,6 @@ async function revealSolution() {
         const data = await getSolution();
 
         solutionMessage.textContent = `Correct solution: ${data.solution}`;
-        setResult("You can still submit your answer!", "info");
 
     } catch (error) {
         solutionMessage.textContent = error.message;
@@ -250,7 +260,10 @@ async function checkAnswer(event) {
         setResult(data.message, data.correct ? "correct" : "wrong");
         scoreDisplay.textContent = data.score;
 
-        await updateLeaderboard();
+        await Promise.all([
+            updateStats(),
+            updateLeaderboard()
+        ]);
 
     } catch (error) {
         setResult(error.message, "info");
@@ -265,5 +278,10 @@ startButton.addEventListener("click", startGame);
 answerForm.addEventListener("submit", checkAnswer);
 solutionButton.addEventListener("click", revealSolution);
 
-updateScore();
+window.addEventListener("player-updated", () => {
+    updateStats();
+    updateLeaderboard();
+});
+
+updateStats();
 updateLeaderboard();
