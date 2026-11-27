@@ -1,5 +1,5 @@
 
-import { setPlayerName } from "./ui/Ui.controller.js";
+import { setPlayerName, setAdminVisible } from "./ui/Ui.controller.js";
 
 async function checkAuthentication() {
     try {
@@ -13,6 +13,7 @@ async function checkAuthentication() {
         const data = await response.json();
 
         setPlayerName(data.user.username);
+        setAdminVisible(data.user.role === "admin");
 
         return true;
 

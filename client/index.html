@@ -25,6 +25,9 @@
                 </span>
             </div>
 
+            <a id="adminLink" class="btn btn-ghost" href="admin.html" hidden>
+                Admin
+            </a>
             <button id="editProfileButton" class="btn btn-primary" type="button">
                 Edit Profile
             </button>
@@ -40,13 +43,13 @@
             <div class="welcome-avatar" id="welcomeAvatar">P</div>
 
             <div class="welcome-text">
-                <p class="eyebrow">Player Dashboard</p>
+                <p class="eyebrow" id="dashboardEyebrow">Player Dashboard</p>
                 <h1>Welcome back, <span id="welcomeName">Player</span>!</h1>
-                <p>Solve puzzles, earn points, and climb the global leaderboard.</p>
+                <p id="dashboardSubtitle">Solve puzzles, earn points, and climb the global leaderboard.</p>
             </div>
         </section>
 
-        <section class="stats-grid" aria-label="Player statistics">
+        <section class="stats-grid" id="statsGrid" aria-label="Player statistics">
 
             <article class="stat-card">
                 <span class="stat-icon" aria-hidden="true">⭐</span>

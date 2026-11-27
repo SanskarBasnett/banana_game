@@ -1297,3 +1297,14 @@ body:has(.profile-dialog[open]) {
         padding: 20px 16px;
     }
 }
+
+.btn-danger {
+    background: #b00020;
+    color: #ffffff;
+    border: 1px solid #b00020;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #8a0019;
+    border-color: #8a0019;
+}

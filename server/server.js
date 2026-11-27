@@ -14,6 +14,8 @@ const authRoutes = require("./routes/authRoutes");
 
 const gameRoutes = require("./routes/gameRoutes");
 
+const adminRoutes = require("./routes/adminRoutes");
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -50,3 +52,5 @@ app.listen(PORT, () => {
 app.use("/api/auth", authRoutes);
 
 app.use("/api/game", gameRoutes);
+
+app.use("/api/admin", adminRoutes);

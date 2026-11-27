@@ -187,6 +187,7 @@ function getPlayerStats(req, res) {
                     COALESCE(SUM(scores.score), 0) AS total
                 FROM users
                 LEFT JOIN scores ON users.id = scores.user_id
+                WHERE users.role = 'player'
                 GROUP BY users.id, users.username
             )
             WHERE total > ?
@@ -221,6 +222,7 @@ function getLeaderboard(req, res) {
                 COALESCE(SUM(scores.score), 0) AS totalScore
             FROM users
             LEFT JOIN scores ON users.id = scores.user_id
+            WHERE users.role = 'player'
             GROUP BY users.id, users.username
             ORDER BY totalScore DESC, users.username ASC
             LIMIT 10

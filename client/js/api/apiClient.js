@@ -57,3 +57,27 @@ export function getLeaderboard() {
 export function getSolution() {
     return apiRequest("/api/game/solution");
 }
+
+// ---- Admin ----
+
+export function getAdminUsers() {
+    return apiRequest("/api/admin/users");
+}
+
+export function deleteUser(id) {
+    return apiRequest(`/api/admin/users/${id}`, {
+        method: "DELETE"
+    });
+}
+
+export function resetUserScore(id) {
+    return apiRequest(`/api/admin/users/${id}/reset-score`, {
+        method: "POST"
+    });
+}
+
+export function resetAllScores() {
+    return apiRequest("/api/admin/scores/reset", {
+        method: "POST"
+    });
+}

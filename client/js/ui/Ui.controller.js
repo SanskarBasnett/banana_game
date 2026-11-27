@@ -24,6 +24,44 @@ export function setPlayerName(name) {
     document.title = `${displayName} | Banana Game`;
 }
 
+export function setAdminVisible(isAdmin) {
+    const link = document.getElementById("adminLink");
+
+    if (link) {
+        link.hidden = !isAdmin;
+    }
+
+    // Admins do not play or appear on the leaderboard, so show an admin
+    // dashboard without the player score/rank cards.
+    const eyebrow = document.getElementById("dashboardEyebrow");
+
+    if (eyebrow) {
+        eyebrow.textContent = isAdmin
+            ? "Admin Dashboard"
+            : "Player Dashboard";
+    }
+
+    const subtitle = document.getElementById("dashboardSubtitle");
+
+    if (subtitle) {
+        subtitle.textContent = isAdmin
+            ? "Manage players, reset scores, and keep the leaderboard fair."
+            : "Solve puzzles, earn points, and climb the global leaderboard.";
+    }
+
+    const statsGrid = document.getElementById("statsGrid");
+
+    if (statsGrid) {
+        statsGrid.hidden = isAdmin;
+    }
+
+    const headerRank = document.getElementById("headerRank");
+
+    if (headerRank) {
+        headerRank.hidden = isAdmin;
+    }
+}
+
 export function formatMemberSince(value) {
     if (!value) {
         return "—";

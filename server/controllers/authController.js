@@ -94,7 +94,8 @@ async function login(req, res) {
 
         return res.status(200).json({
             message: "Login successful!",
-            username: user.username
+            username: user.username,
+            role: user.role
         });
 
     } catch (error) {
@@ -109,7 +110,7 @@ async function login(req, res) {
 function getMe(req, res) {
     try {
         const user = db.prepare(`
-            SELECT id, username, email, created_at
+            SELECT id, username, email, role, created_at
             FROM users
             WHERE id = ?
         `).get(req.session.userId);

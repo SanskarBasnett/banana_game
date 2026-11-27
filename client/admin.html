@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Banana Game</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="game-page dashboard-page">
+    <header class="dashboard-header">
+        <a class="brand" href="index.html">🍌 Banana Game</a>
+        <a class="btn btn-ghost" href="index.html">Back to Game</a>
+    </header>
+
+    <main class="dashboard">
+        <h1>Admin Dashboard</h1>
+
+        <div id="adminMessage" role="status"></div>
+
+        <section class="card">
+            <div class="card-header">
+                <h2>Users</h2>
+                <button id="resetAllScoresButton" class="btn btn-danger" type="button">
+                    Reset All Scores
+                </button>
+            </div>
+
+            <div class="leaderboard-wrap">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Score</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminUserTable">
+                        <tr><td colspan="5">Loading users...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/admin/admin.js"></script>
+</body>
+</html>
