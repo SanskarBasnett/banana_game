@@ -1,225 +1,133 @@
-
 const { getPuzzle } = require("../services/bananaApiService");
 const db = require("../config/database");
 
-const PUZZLE_TIME_LIMIT = 30 * 1000;
+const PUZZLE_TIME_LIMIT = 30 * 1000; // milliseconds
 
-// Get a new puzzle
 async function startPuzzle(req, res) {
     try {
         const puzzle = await getPuzzle();
 
-        req.session.currentSolution = puzzle.solution;
-        req.session.puzzleStartedAt = Date.now();
+        // Store the solution server-side so the client never sees the answer
+        req.session.currentSolution  = puzzle.solution;
+        req.session.puzzleStartedAt  = Date.now();
 
-        res.json({
-            imageUrl: puzzle.imageUrl,
-            timeLimit: 30,
-            message: "Puzzle loaded successfully."
-        });
+        res.json({ imageUrl: puzzle.imageUrl, timeLimit: 30 });
 
     } catch (error) {
         console.error("Start puzzle error:", error);
-
-        res.status(500).json({
-            message: "Unable to load a puzzle. Please try again."
-        });
+        res.status(500).json({ message: "Unable to load a puzzle. Please try again." });
     }
 }
 
-// Reveal the solution without ending the puzzle
 function showSolution(req, res) {
     try {
-        const correctAnswer = req.session.currentSolution;
-        const puzzleStartedAt = req.session.puzzleStartedAt;
+        const { currentSolution, puzzleStartedAt } = req.session;
 
-        if (
-            correctAnswer === undefined ||
-            puzzleStartedAt === undefined
-        ) {
-            return res.status(400).json({
-                message: "No active puzzle."
-            });
+        if (currentSolution === undefined || puzzleStartedAt === undefined) {
+            return res.status(400).json({ message: "No active puzzle." });
         }
 
-        const elapsedTime = Date.now() - puzzleStartedAt;
-
-        if (elapsedTime >= PUZZLE_TIME_LIMIT) {
+        if (Date.now() - puzzleStartedAt >= PUZZLE_TIME_LIMIT) {
             delete req.session.currentSolution;
             delete req.session.puzzleStartedAt;
-
-            return res.status(410).json({
-                message: "Time's up! The solution is no longer available."
-            });
+            return res.status(410).json({ message: "Time's up! The solution is no longer available." });
         }
 
-        // Keep the answer in the session for submission
-        res.json({
-            solution: correctAnswer,
-            message: "Here is the correct solution."
-        });
+        // The solution stays in the session so the player can still submit
+        res.json({ solution: currentSolution });
 
     } catch (error) {
         console.error("Show solution error:", error);
-
-        res.status(500).json({
-            message: "Unable to show the solution."
-        });
+        res.status(500).json({ message: "Unable to show the solution." });
     }
 }
 
-// Submit an answer
 function submitAnswer(req, res) {
     try {
         const { answer } = req.body;
 
         if (answer === undefined || answer === null || answer === "") {
-            return res.status(400).json({
-                message: "Please enter an answer."
-            });
+            return res.status(400).json({ message: "Please enter an answer." });
         }
 
-        const playerAnswer = Number(answer);
-        const correctAnswer = req.session.currentSolution;
-        const puzzleStartedAt = req.session.puzzleStartedAt;
+        const playerAnswer  = Number(answer);
+        const { currentSolution, puzzleStartedAt } = req.session;
 
-        if (
-            !Number.isInteger(playerAnswer) ||
-            correctAnswer === undefined ||
-            puzzleStartedAt === undefined
-        ) {
-            return res.status(400).json({
-                message: "Invalid answer or no active puzzle."
-            });
+        if (!Number.isInteger(playerAnswer) || currentSolution === undefined || puzzleStartedAt === undefined) {
+            return res.status(400).json({ message: "Invalid answer or no active puzzle." });
         }
 
-        const elapsedTime = Date.now() - puzzleStartedAt;
-
-        if (elapsedTime >= PUZZLE_TIME_LIMIT) {
+        if (Date.now() - puzzleStartedAt >= PUZZLE_TIME_LIMIT) {
             delete req.session.currentSolution;
             delete req.session.puzzleStartedAt;
-
-            return res.status(410).json({
-                message: "Time's up! No point was awarded."
-            });
+            return res.status(410).json({ message: "Time's up! No point was awarded." });
         }
 
-        // End the puzzle after one submission
+        // Clear the puzzle from the session — only one submission per round
         delete req.session.currentSolution;
         delete req.session.puzzleStartedAt;
 
-        if (playerAnswer === correctAnswer) {
-            db.prepare(`
-                INSERT INTO scores (user_id, score)
-                VALUES (?, ?)
-            `).run(req.session.userId, 1);
+        const correct = playerAnswer === currentSolution;
+
+        if (correct) {
+            db.prepare("INSERT INTO scores (user_id, score) VALUES (?, ?)").run(req.session.userId, 1);
         }
 
-        const totalScore = db.prepare(`
-            SELECT COALESCE(SUM(score), 0) AS total
-            FROM scores
-            WHERE user_id = ?
-        `).get(req.session.userId).total;
-
-        if (playerAnswer === correctAnswer) {
-            return res.json({
-                correct: true,
-                message: "Correct! You earned 1 point.",
-                score: totalScore
-            });
-        }
+        const { total: totalScore } = db.prepare(
+            "SELECT COALESCE(SUM(score), 0) AS total FROM scores WHERE user_id = ?"
+        ).get(req.session.userId);
 
         return res.json({
-            correct: false,
-            message: "Incorrect answer. Try another puzzle!",
+            correct,
+            message: correct ? "Correct! You earned 1 point." : "Incorrect answer. Try another puzzle!",
             score: totalScore
         });
 
     } catch (error) {
         console.error("Submit answer error:", error);
-
-        res.status(500).json({
-            message: "Unable to check your answer."
-        });
+        res.status(500).json({ message: "Unable to check your answer." });
     }
 }
 
-// Get the player's total score
-function getScores(req, res) {
-    const result = db.prepare(`
-        SELECT COALESCE(SUM(score), 0) AS total
-        FROM scores
-        WHERE user_id = ?
-    `).get(req.session.userId);
-
-    res.json({
-        score: result.total
-    });
-}
-
-// Get dashboard statistics for the logged-in player
 function getPlayerStats(req, res) {
     try {
-        const userId = req.session.userId;
+        // req.user is attached by requireAuth, so no second user lookup needed
+        const { id: userId, username } = req.user;
 
-        const user = db.prepare(
-            "SELECT username, created_at FROM users WHERE id = ?"
+        const { totalScore } = db.prepare(
+            "SELECT COALESCE(SUM(score), 0) AS totalScore FROM scores WHERE user_id = ?"
         ).get(userId);
 
-        if (!user) {
-            return res.status(401).json({
-                message: "User account not found."
-            });
-        }
-
-        const stats = db.prepare(`
-            SELECT COALESCE(SUM(score), 0) AS totalScore
-            FROM scores
-            WHERE user_id = ?
-        `).get(userId);
-
-        const rank = db.prepare(`
+        // Rank = number of players who score strictly higher, plus 1.
+        // Ties are broken alphabetically so rank is deterministic.
+        const { rank } = db.prepare(`
             SELECT COUNT(*) + 1 AS rank
             FROM (
-                SELECT
-                    users.id,
-                    users.username,
-                    COALESCE(SUM(scores.score), 0) AS total
+                SELECT users.id, users.username, COALESCE(SUM(scores.score), 0) AS total
                 FROM users
                 LEFT JOIN scores ON users.id = scores.user_id
                 WHERE users.role = 'player'
                 GROUP BY users.id, users.username
             )
-            WHERE total > ?
-               OR (total = ? AND username < ?)
-        `).get(
-            stats.totalScore,
-            stats.totalScore,
-            user.username
-        ).rank;
+            WHERE total > ? OR (total = ? AND username < ?)
+        `).get(totalScore, totalScore, username);
 
-        res.json({
-            totalScore: stats.totalScore,
-            rank,
-            memberSince: user.created_at
-        });
+        const { created_at: memberSince } = db.prepare(
+            "SELECT created_at FROM users WHERE id = ?"
+        ).get(userId);
+
+        res.json({ totalScore, rank, memberSince });
 
     } catch (error) {
         console.error("Player stats error:", error);
-
-        res.status(500).json({
-            message: "Unable to load your statistics."
-        });
+        res.status(500).json({ message: "Unable to load your statistics." });
     }
 }
 
-// Get the global top 10 leaderboard
 function getLeaderboard(req, res) {
     try {
         const leaderboard = db.prepare(`
-            SELECT
-                users.username,
-                COALESCE(SUM(scores.score), 0) AS totalScore
+            SELECT users.username, COALESCE(SUM(scores.score), 0) AS totalScore
             FROM users
             LEFT JOIN scores ON users.id = scores.user_id
             WHERE users.role = 'player'
@@ -228,24 +136,12 @@ function getLeaderboard(req, res) {
             LIMIT 10
         `).all();
 
-        res.json({
-            leaderboard
-        });
+        res.json({ leaderboard });
 
     } catch (error) {
         console.error("Leaderboard error:", error);
-
-        res.status(500).json({
-            message: "Unable to load leaderboard."
-        });
+        res.status(500).json({ message: "Unable to load leaderboard." });
     }
 }
 
-module.exports = {
-    startPuzzle,
-    showSolution,
-    submitAnswer,
-    getScores,
-    getPlayerStats,
-    getLeaderboard
-};
+module.exports = { startPuzzle, showSolution, submitAnswer, getPlayerStats, getLeaderboard };

@@ -1,17 +1,15 @@
-
 const db = require("../config/database");
 
-// Helper: count admins
+// Guards against deleting the only remaining admin, which would lock
+// everyone out of the admin dashboard permanently
 function countAdmins() {
-    return db.prepare(
-        "SELECT COUNT(*) AS count FROM users WHERE role = 'admin'"
-    ).get().count;
+    return db.prepare("SELECT COUNT(*) AS count FROM users WHERE role = 'admin'").get().count;
 }
 
-// List all users with their score, for admins.
-// password_hash is deliberately never selected.
 function listUsers(req, res) {
     try {
+        // LEFT JOIN includes players with zero scores; COALESCE turns NULL into 0.
+        // password_hash is deliberately excluded — hashes must never leave the server.
         const users = db.prepare(`
             SELECT users.id, users.username, users.email, users.role,
                    users.created_at AS createdAt,
@@ -30,7 +28,6 @@ function listUsers(req, res) {
     }
 }
 
-// Delete a user and all of their scores. Transactional.
 function deleteUser(req, res) {
     try {
         const targetId = Number(req.params.id);
@@ -40,33 +37,25 @@ function deleteUser(req, res) {
         }
 
         if (targetId === req.session.userId) {
-            return res.status(409).json({
-                message: "You cannot delete your own account."
-            });
+            return res.status(409).json({ message: "You cannot delete your own account." });
         }
 
-        const target = db.prepare(
-            "SELECT id, role FROM users WHERE id = ?"
-        ).get(targetId);
+        const target = db.prepare("SELECT id, role FROM users WHERE id = ?").get(targetId);
 
         if (!target) {
             return res.status(404).json({ message: "User not found." });
         }
 
         if (target.role === "admin" && countAdmins() <= 1) {
-            return res.status(409).json({
-                message: "Cannot delete the last admin."
-            });
+            return res.status(409).json({ message: "Cannot delete the last admin." });
         }
 
-        // scores.user_id references users(id); delete child rows first.
-        // Wrapped in a transaction so a failure cannot orphan scores.
-        const deleteUserAndScores = db.transaction((userId) => {
-            db.prepare("DELETE FROM scores WHERE user_id = ?").run(userId);
-            db.prepare("DELETE FROM users WHERE id = ?").run(userId);
-        });
-
-        deleteUserAndScores(targetId);
+        // Wrap in a transaction — if either DELETE fails, neither is committed,
+        // preventing orphaned score rows that reference a deleted user
+        db.transaction((id) => {
+            db.prepare("DELETE FROM scores WHERE user_id = ?").run(id);
+            db.prepare("DELETE FROM users  WHERE id = ?").run(id);
+        })(targetId);
 
         return res.json({ message: "User deleted.", user: { id: targetId } });
 
@@ -76,7 +65,6 @@ function deleteUser(req, res) {
     }
 }
 
-// Reset one user's score to zero. The account stays; only scores are removed.
 function resetUserScore(req, res) {
     try {
         const targetId = Number(req.params.id);
@@ -85,9 +73,7 @@ function resetUserScore(req, res) {
             return res.status(400).json({ message: "Invalid user id." });
         }
 
-        const target = db.prepare(
-            "SELECT id FROM users WHERE id = ?"
-        ).get(targetId);
+        const target = db.prepare("SELECT id FROM users WHERE id = ?").get(targetId);
 
         if (!target) {
             return res.status(404).json({ message: "User not found." });
@@ -95,10 +81,7 @@ function resetUserScore(req, res) {
 
         db.prepare("DELETE FROM scores WHERE user_id = ?").run(targetId);
 
-        return res.json({
-            message: "Score reset.",
-            user: { id: targetId, totalScore: 0 }
-        });
+        return res.json({ message: "Score reset.", user: { id: targetId, totalScore: 0 } });
 
     } catch (error) {
         console.error("Reset score error:", error);
@@ -106,10 +89,10 @@ function resetUserScore(req, res) {
     }
 }
 
-// Reset every score. The leaderboard is derived from the scores table, so
-// clearing it resets the leaderboard to all zeros.
 function resetAllScores(req, res) {
     try {
+        // The leaderboard is derived by summing the scores table, so clearing
+        // it resets all ranks and scores to zero without touching user accounts
         db.prepare("DELETE FROM scores").run();
 
         return res.json({ message: "All scores reset. Leaderboard cleared." });
@@ -120,9 +103,4 @@ function resetAllScores(req, res) {
     }
 }
 
-module.exports = {
-    listUsers,
-    deleteUser,
-    resetUserScore,
-    resetAllScores
-};
+module.exports = { listUsers, deleteUser, resetUserScore, resetAllScores };

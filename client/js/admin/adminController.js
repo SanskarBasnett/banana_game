@@ -1,20 +1,12 @@
+import { getAdminUsers, deleteUser, resetUserScore, resetAllScores } from "../api/apiClient.js";
 
-import {
-    getAdminUsers,
-    deleteUser,
-    resetUserScore,
-    resetAllScores
-} from "../api/apiClient.js";
-
-const table = document.getElementById("adminUserTable");
-const message = document.getElementById("adminMessage");
+const table          = document.getElementById("adminUserTable");
+const message        = document.getElementById("adminMessage");
 const resetAllButton = document.getElementById("resetAllScoresButton");
 
 function setMessage(text) {
     if (message) message.textContent = text;
 }
-
-// Rows are built with textContent, not innerHTML, to avoid injecting markup.
 
 async function loadUsers() {
     table.textContent = "Loading users...";
@@ -32,7 +24,7 @@ function renderUsers(users) {
     table.textContent = "";
 
     if (users.length === 0) {
-        const row = document.createElement("tr");
+        const row  = document.createElement("tr");
         const cell = document.createElement("td");
         cell.colSpan = 5;
         cell.textContent = "No users.";
@@ -44,10 +36,11 @@ function renderUsers(users) {
     users.forEach((user) => {
         const row = document.createElement("tr");
 
-        const idCell = document.createElement("td");
+        const idCell    = document.createElement("td");
         idCell.textContent = user.id;
 
-        const nameCell = document.createElement("td");
+        const nameCell  = document.createElement("td");
+        // textContent prevents any username containing HTML from being injected
         nameCell.textContent = user.username;
 
         const emailCell = document.createElement("td");
@@ -58,36 +51,26 @@ function renderUsers(users) {
 
         const actionsCell = document.createElement("td");
 
-        const resetScoreButton = document.createElement("button");
-        resetScoreButton.type = "button";
-        resetScoreButton.className = "btn btn-ghost";
-        resetScoreButton.textContent = "Reset score";
-        resetScoreButton.addEventListener("click", () =>
-            onResetScore(user.id, user.username, resetScoreButton)
-        );
+        const resetBtn = document.createElement("button");
+        resetBtn.type = "button";
+        resetBtn.className = "btn btn-ghost";
+        resetBtn.textContent = "Reset score";
+        resetBtn.addEventListener("click", () => onResetScore(user.id, user.username, resetBtn));
 
-        const deleteButton = document.createElement("button");
-        deleteButton.type = "button";
-        deleteButton.className = "btn btn-danger";
-        deleteButton.textContent = "Delete";
-        deleteButton.addEventListener("click", () =>
-            onDeleteUser(user.id, user.username, deleteButton)
-        );
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "btn btn-danger";
+        deleteBtn.textContent = "Delete";
+        deleteBtn.addEventListener("click", () => onDeleteUser(user.id, user.username, deleteBtn));
 
-        actionsCell.append(resetScoreButton, deleteButton);
-
+        actionsCell.append(resetBtn, deleteBtn);
         row.append(idCell, nameCell, emailCell, scoreCell, actionsCell);
-
         table.appendChild(row);
     });
 }
 
 async function onResetScore(id, username, button) {
-    const ok = window.confirm(
-        `Reset ${username}'s score to 0? This removes their score entries and updates the leaderboard.`
-    );
-
-    if (!ok) return;
+    if (!window.confirm(`Reset ${username}'s score to 0?`)) return;
 
     button.disabled = true;
     setMessage("");
@@ -104,11 +87,7 @@ async function onResetScore(id, username, button) {
 }
 
 async function onDeleteUser(id, username, button) {
-    const ok = window.confirm(
-        `Delete user "${username}" (id ${id})? This permanently removes the account and all their scores.`
-    );
-
-    if (!ok) return;
+    if (!window.confirm(`Delete user "${username}" (id ${id})? This cannot be undone.`)) return;
 
     button.disabled = true;
     setMessage("");
@@ -126,11 +105,7 @@ async function onDeleteUser(id, username, button) {
 
 if (resetAllButton) {
     resetAllButton.addEventListener("click", async () => {
-        const ok = window.confirm(
-            "Reset ALL scores for ALL users? This clears every score and resets the leaderboard."
-        );
-
-        if (!ok) return;
+        if (!window.confirm("Reset ALL scores for ALL users? This clears the leaderboard.")) return;
 
         resetAllButton.disabled = true;
         setMessage("");

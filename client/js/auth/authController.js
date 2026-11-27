@@ -1,3 +1,7 @@
+// Handles register and login form submissions.
+// Uses the shared apiClient so headers and error handling stay consistent.
+
+import { register, login } from "../api/apiClient.js";
 
 const registerForm = document.getElementById("registerForm");
 
@@ -6,47 +10,30 @@ if (registerForm) {
         event.preventDefault();
 
         const username = document.getElementById("username").value.trim();
-        const email = document.getElementById("email").value.trim();
+        const email    = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
+        const message  = document.getElementById("message");
+        const submit   = registerForm.querySelector('button[type="submit"]');
 
-        const message = document.getElementById("message");
-        const submitButton = registerForm.querySelector('button[type="submit"]');
-
-        submitButton.disabled = true;
+        submit.disabled = true;
 
         try {
-            const response = await fetch("/api/auth/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    username,
-                    email,
-                    password
-                })
-            });
-
-            const data = await response.json();
+            const data = await register({ username, email, password });
 
             message.textContent = data.message;
+            registerForm.reset();
 
-            if (response.ok) {
-                registerForm.reset();
+            // Short delay so the success message is readable before redirect
+            setTimeout(() => { window.location.href = "index.html"; }, 800);
 
-                setTimeout(() => {
-                    window.location.href = "index.html";
-                }, 800);
-            }
         } catch (error) {
-            message.textContent = "Unable to connect to the server.";
+            message.textContent = error.message;
             console.error(error);
         } finally {
-            submitButton.disabled = false;
+            submit.disabled = false;
         }
     });
 }
-
 
 const loginForm = document.getElementById("loginForm");
 
@@ -54,35 +41,24 @@ if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
         event.preventDefault();
 
-        const email = document.getElementById("email").value.trim();
+        const email    = document.getElementById("email").value.trim();
         const password = document.getElementById("password").value;
+        const message  = document.getElementById("message");
+        const submit   = loginForm.querySelector('button[type="submit"]');
 
-        const message = document.getElementById("message");
-        const submitButton = loginForm.querySelector('button[type="submit"]');
-
-        submitButton.disabled = true;
+        submit.disabled = true;
 
         try {
-            const response = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
+            const data = await login({ email, password });
 
             message.textContent = data.message;
+            window.location.href = "index.html";
 
-            if (response.ok) {
-                window.location.href = "index.html";
-            }
         } catch (error) {
-            message.textContent = "Unable to connect to the server.";
+            message.textContent = error.message;
             console.error(error);
         } finally {
-            submitButton.disabled = false;
+            submit.disabled = false;
         }
     });
 }

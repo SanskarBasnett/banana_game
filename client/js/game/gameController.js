@@ -1,189 +1,60 @@
+// Orchestrates the puzzle round lifecycle.
+// Timer logic is in timerController.js; leaderboard rendering is in
+// leaderboardController.js — each module has one reason to change.
 
-import {
-    getPuzzle,
-    getSolution,
-    submitAnswer,
-    getPlayerStats,
-    getLeaderboard
-} from "../api/apiClient.js";
+import { getPuzzle, getSolution, submitAnswer, getPlayerStats } from "../api/apiClient.js";
 import { formatMemberSince } from "../ui/Ui.controller.js";
+import { startTimer, stopTimer } from "./timerController.js";
+import { updateLeaderboard } from "./leaderboardController.js";
+import { AppEvents, emit } from "../events.js";
 
-const startButton = document.getElementById("startButton");
-const puzzleArea = document.getElementById("puzzle-area");
-const puzzleImage = document.getElementById("puzzleImage");
-const gameMessage = document.getElementById("game-message");
-const answerForm = document.getElementById("answerForm");
-const answerInput = document.getElementById("answer");
-const resultMessage = document.getElementById("resultMessage");
-const scoreDisplay = document.getElementById("score");
-const rankDisplay = document.getElementById("playerRank");
-const sinceDisplay = document.getElementById("playerSince");
-const headerRank = document.getElementById("headerRank");
-const timerDisplay = document.getElementById("timer");
-const leaderboardDisplay = document.getElementById("leaderboard");
-
-const solutionButton = document.getElementById("solutionButton");
+const startButton     = document.getElementById("startButton");
+const puzzleArea      = document.getElementById("puzzle-area");
+const puzzleImage     = document.getElementById("puzzleImage");
+const gameMessage     = document.getElementById("game-message");
+const answerForm      = document.getElementById("answerForm");
+const answerInput     = document.getElementById("answer");
+const resultMessage   = document.getElementById("resultMessage");
+const scoreDisplay    = document.getElementById("score");
+const rankDisplay     = document.getElementById("playerRank");
+const sinceDisplay    = document.getElementById("playerSince");
+const headerRank      = document.getElementById("headerRank");
+const solutionButton  = document.getElementById("solutionButton");
 const solutionMessage = document.getElementById("solutionMessage");
 
-const PUZZLE_SECONDS = 30;
-
 let puzzleActive = false;
-let countdownInterval = null;
-let puzzleEndsAt = 0;
-let timeRemaining = PUZZLE_SECONDS;
 
 function setResult(message, type) {
     resultMessage.textContent = message;
-    resultMessage.classList.remove(
-        "result-correct",
-        "result-wrong",
-        "result-info"
-    );
-
-    if (type) {
-        resultMessage.classList.add(`result-${type}`);
-    }
+    resultMessage.classList.remove("result-correct", "result-wrong", "result-info");
+    if (type) resultMessage.classList.add(`result-${type}`);
 }
 
 async function updateStats() {
     try {
         const data = await getPlayerStats();
-
         scoreDisplay.textContent = data.totalScore;
-        rankDisplay.textContent = `#${data.rank}`;
-        sinceDisplay.textContent = formatMemberSince(data.memberSince);
-
-        if (headerRank) {
-            headerRank.textContent = `Rank #${data.rank}`;
-        }
+        if (rankDisplay)  rankDisplay.textContent  = `#${data.rank}`;
+        if (sinceDisplay) sinceDisplay.textContent = formatMemberSince(data.memberSince);
+        if (headerRank)   headerRank.textContent   = `Rank #${data.rank}`;
     } catch (error) {
         console.error("Stats loading error:", error);
     }
 }
 
-// Load and display the global leaderboard
-async function updateLeaderboard() {
-    try {
-        const data = await getLeaderboard();
-        leaderboardDisplay.textContent = "";
-
-        if (data.leaderboard.length === 0) {
-            leaderboardDisplay.textContent = "No players yet.";
-            return;
-        }
-
-        const currentUsername =
-            document.getElementById("username").textContent.trim();
-
-        const table = document.createElement("table");
-        table.classList.add("leaderboard-table");
-
-        const thead = document.createElement("thead");
-        const header = document.createElement("tr");
-
-        ["Rank", "Player", "Score"].forEach(title => {
-            const th = document.createElement("th");
-            th.scope = "col";
-            th.textContent = title;
-            header.appendChild(th);
-        });
-
-        thead.appendChild(header);
-
-        const tbody = document.createElement("tbody");
-
-        data.leaderboard.forEach((player, index) => {
-            const row = document.createElement("tr");
-
-            // Highlight the logged-in player
-            if (player.username === currentUsername) {
-                row.classList.add("current-user-row");
-            }
-
-            const rankCell = document.createElement("td");
-
-            const medals = ["🥇", "🥈", "🥉"];
-
-            if (index < 3) {
-                rankCell.textContent = `${medals[index]} ${index + 1}`;
-            } else {
-                rankCell.textContent = index + 1;
-            }
-
-            const nameCell = document.createElement("td");
-            nameCell.textContent = player.username;
-
-            const scoreCell = document.createElement("td");
-            scoreCell.textContent = player.totalScore;
-
-            row.appendChild(rankCell);
-            row.appendChild(nameCell);
-            row.appendChild(scoreCell);
-
-            tbody.appendChild(row);
-        });
-
-        table.appendChild(thead);
-        table.appendChild(tbody);
-        leaderboardDisplay.appendChild(table);
-
-    } catch (error) {
-        leaderboardDisplay.textContent = "Unable to load leaderboard.";
-        console.error("Leaderboard loading error:", error);
-    }
-}
-
-function stopCountdown() {
-    clearInterval(countdownInterval);
-    countdownInterval = null;
-}
-
-function endPuzzle() {
-    stopCountdown();
+function endPuzzle(reason) {
+    stopTimer();
     puzzleActive = false;
-    puzzleArea.hidden = true;
-    startButton.hidden = false;
+    puzzleArea.hidden  = true;
+    startButton.hidden   = false;
     startButton.disabled = false;
+    emit(AppEvents.PUZZLE_ENDED, { reason });
 }
 
-// Start the countdown
-function startTimer() {
-    stopCountdown();
-
-    puzzleEndsAt = Date.now() + PUZZLE_SECONDS * 1000;
-    timerDisplay.classList.remove("warning");
-
-    updateTimer();
-
-    // Derive the remaining time from a timestamp so throttled
-    // background tabs do not fall out of sync.
-    countdownInterval = setInterval(updateTimer, 250);
-}
-
-function updateTimer() {
-    timeRemaining = Math.max(
-        0,
-        Math.ceil((puzzleEndsAt - Date.now()) / 1000)
-    );
-
-    timerDisplay.textContent = `Time: ${timeRemaining}s`;
-    timerDisplay.classList.toggle(
-        "warning",
-        timeRemaining <= 10 && timeRemaining > 0
-    );
-
-    if (timeRemaining <= 0 && puzzleActive) {
-        endPuzzle();
-        gameMessage.textContent = "Time's up!";
-        setResult("No point awarded. Try another puzzle!", "info");
-    }
-}
-
-// Start a new puzzle
 async function startGame() {
     try {
-        startButton.disabled = true;
-        startButton.hidden = true;
+        startButton.disabled  = true;
+        startButton.hidden    = true;
         solutionButton.disabled = true;
         gameMessage.textContent = "Loading puzzle...";
         setResult("", null);
@@ -195,42 +66,43 @@ async function startGame() {
         puzzleArea.hidden = false;
         gameMessage.textContent = "Solve the banana puzzle!";
 
-        answerInput.value = "";
+        answerInput.value    = "";
         answerInput.disabled = false;
         answerForm.querySelector('button[type="submit"]').disabled = false;
-
-        solutionButton.disabled = false;
+        solutionButton.disabled   = false;
         solutionButton.textContent = "Show Solution";
 
         puzzleActive = true;
 
-        startTimer();
+        startTimer(() => {
+            endPuzzle("timeout");
+            gameMessage.textContent = "Time's up!";
+            setResult("No point awarded. Try another puzzle!", "info");
+        });
+
+        emit(AppEvents.PUZZLE_STARTED);
 
     } catch (error) {
-        gameMessage.textContent = error.message;
-        startButton.hidden = false;
-        startButton.disabled = false;
+        gameMessage.textContent    = error.message;
+        startButton.hidden         = false;
+        startButton.disabled       = false;
+        solutionButton.disabled    = false;
     }
 }
 
-// Show the correct solution without ending the puzzle
 async function revealSolution() {
-    if (!puzzleActive) {
-        return;
-    }
+    if (!puzzleActive) return;
 
     solutionButton.disabled = true;
 
     try {
         const data = await getSolution();
-
         solutionMessage.textContent = `Correct solution: ${data.solution}`;
-
     } catch (error) {
         solutionMessage.textContent = error.message;
 
         if (error.status === 410) {
-            endPuzzle();
+            endPuzzle("timeout");
             gameMessage.textContent = "Time's up!";
             setResult("No point awarded. Try another puzzle!", "info");
         } else {
@@ -239,19 +111,15 @@ async function revealSolution() {
     }
 }
 
-// Check the submitted answer
 async function checkAnswer(event) {
     event.preventDefault();
-
-    if (!puzzleActive) {
-        return;
-    }
+    if (!puzzleActive) return;
 
     puzzleActive = false;
-    stopCountdown();
+    stopTimer();
 
     solutionButton.disabled = true;
-    answerInput.disabled = true;
+    answerInput.disabled    = true;
     answerForm.querySelector('button[type="submit"]').disabled = true;
 
     try {
@@ -260,25 +128,24 @@ async function checkAnswer(event) {
         setResult(data.message, data.correct ? "correct" : "wrong");
         scoreDisplay.textContent = data.score;
 
-        await Promise.all([
-            updateStats(),
-            updateLeaderboard()
-        ]);
+        // Emit player:updated instead of calling updateStats/updateLeaderboard directly —
+        // any module can listen without importing gameController
+        emit(AppEvents.PLAYER_UPDATED);
 
     } catch (error) {
         setResult(error.message, "info");
     }
 
     gameMessage.textContent = "Ready for another puzzle?";
-    endPuzzle();
+    endPuzzle("answered");
 }
 
-// Event listeners
-startButton.addEventListener("click", startGame);
-answerForm.addEventListener("submit", checkAnswer);
+startButton.addEventListener("click",   startGame);
+answerForm.addEventListener("submit",   checkAnswer);
 solutionButton.addEventListener("click", revealSolution);
 
-window.addEventListener("player-updated", () => {
+// Refresh stats and leaderboard whenever any module emits player:updated
+window.addEventListener(AppEvents.PLAYER_UPDATED, () => {
     updateStats();
     updateLeaderboard();
 });

@@ -1,37 +1,35 @@
+// Client-side gate for admin.html.
+// Checks the user is authenticated AND has role 'admin' before loading the
+// dashboard. The real enforcement is server-side — this just prevents
+// rendering a page that would immediately 403 on every API call.
 
-// Admin page gate: only logged-in users with role 'admin' may load this page.
-// The real protection is server-side (/api/admin requires role 'admin');
-// this is only to avoid rendering a page that would 403.
+import { getMe } from "../api/apiClient.js";
 
 const message = document.getElementById("adminMessage");
 
 async function start() {
-    let response;
+    let data;
 
     try {
-        response = await fetch("/api/auth/me");
+        data = await getMe();
     } catch (error) {
-        console.error("Authentication error:", error);
+        // 401 or network failure — getMe() throws on a non-OK response
+        console.error("Authentication check failed:", error);
         window.location.href = "login.html";
         return;
     }
-
-    if (!response.ok) {
-        window.location.href = "login.html";
-        return;
-    }
-
-    const data = await response.json();
 
     if (data.user.role !== "admin") {
+        // Logged-in player — redirect to the game page instead of showing an error
         window.location.href = "index.html";
         return;
     }
 
+    // Dynamic import means the admin controller is never downloaded by players
     await import("./adminController.js");
 }
 
 start().catch((error) => {
-    console.error(error);
+    console.error("Admin bootstrap error:", error);
     if (message) message.textContent = "Unable to load admin dashboard.";
 });
