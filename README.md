@@ -1,8 +1,12 @@
 # Banana Puzzle Game
 
+**Version 2.0.0**
+
 ## 1. Project Overview
 
 The Banana Puzzle Game is a web-based puzzle game that uses the Banana API to provide visual number puzzles. Users can register, log in, solve puzzles, and earn points. Their scores are saved to their accounts using an SQLite database.
+
+Version 2.0.0 adds a hardcoded demo admin account with an admin dashboard. Players play puzzles; the admin manages users and scores.
 
 ## 2. Main Features
 
@@ -12,7 +16,9 @@ The Banana Puzzle Game is a web-based puzzle game that uses the Banana API to pr
 - Random puzzle retrieval through the Banana API.
 - Answer validation and score calculation.
 - Persistent score storage using SQLite.
-- User-specific score tracking.
+- User-specific score tracking and a global top-10 leaderboard.
+- **Admin dashboard** to view users, delete users, and reset scores.
+- Admins are excluded from the leaderboard and player ranks.
 
 ## 3. Technologies Used
 
@@ -38,10 +44,13 @@ banana_game/
 │   ├── css/
 │   │   └── style.css
 │   ├── js/
+│   │   ├── admin/
 │   │   ├── api/
 │   │   ├── auth/
 │   │   ├── game/
+│   │   ├── profile/
 │   │   └── ui/
+│   ├── admin.html
 │   ├── index.html
 │   ├── login.html
 │   └── register.html
@@ -77,18 +86,45 @@ banana_game/
 8. Open `http://localhost:3000` in a web browser.
 9. Register an account and log in to play.
 
-## 6. Application Architecture
+## 6. Admin Account
+
+For this coursework demo, the admin is hardcoded and created automatically when the app starts.
+
+| Field | Value |
+|---|---|
+| Email | `admin@gmail.com` |
+| Password | `admin123` |
+| Username | `admin` |
+
+Log in with these credentials, then click the **Admin** link in the header to open `/admin.html`.
+
+These credentials are for demonstration only and are not intended for real deployment.
+
+## 7. Admin Dashboard
+
+The admin dashboard allows the admin to:
+
+- view all users and their scores,
+- reset an individual player's score,
+- reset all scores, which clears the leaderboard,
+- delete a user and their scores.
+
+Admin pages and APIs are protected by a role check. A logged-in player receives `403`; a user who is not logged in receives `401`.
+
+Players cannot be promoted or demoted through the UI. The admin role is fixed by the hardcoded account above.
+
+## 8. Application Architecture
 
 The project uses a modular client-server architecture.
 
 - **Client:** Displays the interface and handles user interactions.
 - **Server:** Processes requests and manages application logic.
 - **Routes:** Direct incoming requests to the appropriate controllers.
-- **Controllers:** Handle authentication, gameplay, and score operations.
+- **Controllers:** Handle authentication, gameplay, scores, and admin operations.
+- **Middleware:** Checks authentication (`requireAuth`) and admin role (`requireRole`).
 - **Services:** Communicate with the external Banana API.
-- **Database:** Stores user accounts and scores.
+- **Database:** Stores user accounts and scores, including the `role` column.
 
-## 7. External API
+## 9. External API
 
 The application uses the Banana API to retrieve visual number puzzles. The API provides a puzzle image and its corresponding numerical solution. The server handles the API request and keeps the correct answer in the user's session for answer validation.
-
